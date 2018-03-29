@@ -11,23 +11,15 @@ const { fork } = require("child_process")
 
 // Note: These should all be relative to the project root directory
 const rmDirs = [
-  ".git"
+  ".git",
+  "tools"
 ]
 const rmFiles = [
-  ".all-contributorsrc",
-  ".gitattributes",
-  "tools/init.ts"
+  "README.md"
 ]
 const modifyFiles = [
-  "LICENSE",
   "package.json",
   "rollup.config.ts",
-  "test/library.test.ts",
-  "tools/gh-pages-publish.ts"
-]
-const renameFiles = [
-  ["src/library.ts", "src/--libraryname--.ts"],
-  ["test/library.test.ts", "test/--libraryname--.test.ts"]
 ]
 
 const _promptSchemaLibraryName = {
@@ -77,20 +69,6 @@ if (!which("git")) {
 console.log(
   colors.cyan("Hi! You're almost ready to make the next great TypeScript library.")
 )
-
-// Generate the library name and start the tasks
-if (process.env.CI == null) {
-  if (!libraryNameSuggestedIsDefault()) {
-    libraryNameSuggestedAccept()
-  } else {
-    libraryNameCreate()
-  }
-} else {
-  // This is being run in a CI environment, so don't ask any questions
-  setupLibrary(libraryNameSuggested())
-}
-
-
 
 /**
  * Asks the user for the name of the library if it has been cloned into the
@@ -170,15 +148,9 @@ function setupLibrary(libraryName: string) {
     )
   )
 
-  // Get the Git username and email before the .git directory is removed
-  let username = exec("git config user.name").stdout.trim()
-  let usermail = exec("git config user.email").stdout.trim()
-
   removeItems()
 
-  modifyContents(libraryName, username, usermail)
-
-  renameItems(libraryName)
+  modifyContents(libraryName)
 
   finalize()
 
@@ -193,7 +165,7 @@ function removeItems() {
 
   // The directories and files are combined here, to simplify the function,
   // as the 'rm' command checks the item type before attempting to remove it
-  let rmItems = rmDirs.concat(rmFiles)
+  let rmItems = rmDirs.concat(rmFiles);
   rm("-rf", rmItems.map(f => path.resolve(__dirname, "..", f)))
   console.log(colors.red(rmItems.join("\n")))
 
@@ -207,42 +179,20 @@ function removeItems() {
  * @param username 
  * @param usermail 
  */
-function modifyContents(libraryName: string, username: string, usermail: string) {
+function modifyContents(libraryName: string) {
   console.log(colors.underline.white("Modified"))
 
   let files = modifyFiles.map(f => path.resolve(__dirname, "..", f))
   try {
     const changes = replace.sync({
       files,
-      from: [/--libraryname--/g, /--username--/g, /--usermail--/g],
-      to: [libraryName, username, usermail]
+      from: [/--libraryname--/g],
+      to: [libraryName]
     })
     console.log(colors.yellow(modifyFiles.join("\n")))
   } catch (error) {
     console.error("An error occurred modifying the file: ", error)
   }
-
-  console.log("\n")
-}
-
-/**
- * Renames any template files to the new library name
- * 
- * @param libraryName 
- */
-function renameItems(libraryName: string) {
-  console.log(colors.underline.white("Renamed"))
-
-  renameFiles.forEach(function(files) {
-    // Files[0] is the current filename
-    // Files[1] is the new name
-    let newFilename = files[1].replace(/--libraryname--/g, libraryName)
-    mv(
-      path.resolve(__dirname, "..", files[0]),
-      path.resolve(__dirname, "..", newFilename)
-    )
-    console.log(colors.cyan(files[0] + " => " + newFilename))
-  })
 
   console.log("\n")
 }
