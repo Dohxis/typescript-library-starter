@@ -70,6 +70,8 @@ console.log(
   colors.cyan("Hi! You're almost ready to make the next great TypeScript library.")
 )
 
+libraryNameCreate();
+
 /**
  * Asks the user for the name of the library if it has been cloned into the
  * default directory, or if they want a different name to the one suggested
